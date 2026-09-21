@@ -11,8 +11,7 @@ app.post('/webhook', async (request, response) => {
 
     const contexts = queryResult.outputContexts || [];
     const pedidoContext = contexts.find(context =>
-      context.name.endsWith('/contexts/pedido-em-andamento') ||
-      context.name.endsWith('/contexts/pedido-em-andamento-outros')
+      context.name.endsWith('/contexts/pedido-em-andamento')
     );
 
     const item = pedidoContext?.parameters?.['set-pronto'] ||
