@@ -23,7 +23,7 @@ app.post('/webhook', async (request, response) => {
       });
     }
 
-    const url = `https://viacep.com.br{cep}/json/`;
+    const url = `https://viacep.com.br/ws/${cep}/json/`;
 
     const viaCepResponse = await axios.get(url);
     const dados = viaCepResponse.data;
