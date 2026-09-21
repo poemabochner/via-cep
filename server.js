@@ -41,12 +41,11 @@ app.post('/webhook', async (request, response) => {
       });
     } else {
       const textoResposta =
-          `confirma a compra de ${item} para ser enviada no endereço:\n\n` +
+          `confirma a compra de ${item} para ser enviado no endereço:\n\n` +
           `📍 ${dados.logradouro}\n` +
-          `🏘️ ${dados.bairro}\n` +
-          `🏙️ ${dados.localidade} - ${dados.uf}\n\n` +
-          `1. sim\n` +
-          `2. não`;
+          `${dados.bairro}\n` +
+          `${dados.localidade} - ${dados.uf}\n\n` +
+          `sim ou não?`;
 
       return response.json({
         fulfillmentText: textoResposta
