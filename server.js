@@ -9,10 +9,16 @@ app.post('/webhook', (request, response) => {
   const agent = new WebhookClient({ request, response });
 
   function consultarViaCep(agent) {
-    let cep = agent.parameters.cep;
+    let rawCep = agent.parameters.cep;
+    if (Array.isArray(rawCep)) {
+      rawCep = rawCep[0];
+    }
 
-    if (typeof cep === 'string') {
-      cep = cep.replace(/\D/g, '');
+    let cep = String(rawCep).replace(/\D/g, '');
+
+    if (cep.length !== 8) {
+      agent.add(`o CEP recebido (${rawCep}) não parece válido. por favor, digite os 8 números novamente.`);
+      return;
     }
 
     const url = `https://viacep.com.br{cep}/json/`;
