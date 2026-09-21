@@ -1,15 +1,16 @@
 const express = require('express');
 const axios = require('axios');
-const { WebhookClient } = require('dialogflow-fulfillment');
 
 const app = express();
 app.use(express.json());
 
-app.post('/webhook', (request, response) => {
-  const agent = new WebhookClient({ request, response });
+app.post('/webhook', async (request, response) => {
+  try {
+    const queryResult = request.body.queryResult;
+    const parameters = queryResult.parameters || {};
+    
+    let rawCep = parameters.cep;
 
-  function consultarViaCep(agent) {
-    let rawCep = agent.parameters.cep;
     if (Array.isArray(rawCep)) {
       rawCep = rawCep[0];
     }
@@ -17,35 +18,38 @@ app.post('/webhook', (request, response) => {
     let cep = String(rawCep).replace(/\D/g, '');
 
     if (cep.length !== 8) {
-      agent.add(`o CEP recebido (${rawCep}) não parece válido. por favor, digite os 8 números novamente.`);
-      return;
+      return response.json({
+        fulfillmentText: `o CEP recebido (${rawCep}) não parece válido. por favor, digite os 8 números novamente.`
+      });
     }
 
     const url = `https://viacep.com.br{cep}/json/`;
 
-    return axios.get(url)
-      .then((res) => {
-        const dados = res.data;
+    const viaCepResponse = await axios.get(url);
+    const dados = viaCepResponse.data;
 
-        if (dados.erro) {
-          agent.add(`não encontrei o endereço para o CEP ${cep}. Pode conferir os números?`);
-        } else {
-          const resposta = `localizei o endereço!\n` +
-                           `rua: ${dados.logradouro}\n` +
-                           `bairro: ${dados.bairro}\n` +
-                           `cidade: ${dados.localidade} - ${dados.uf}\n\n`;
-          agent.add(resposta);
-        }
-      })
-      .catch((error) => {
-        console.error('erro no ViaCEP:', error);
-        agent.add('tive um problema ao consultar seu CEP. pode tentar novamente?');
+    if (dados.erro) {
+      return response.json({
+        fulfillmentText: `não encontrei nenhum endereço para o CEP ${cep}. Pode conferir os números?`
       });
-  }
+    } else {
+      const textoResposta = `localizei o endereço!\n` +
+                            `rua: ${dados.logradouro}\n` +
+                            `bairro: ${dados.bairro}\n` +
+                            `cidade: ${dados.localidade} - ${dados.uf}\n\n`;
 
-  let intentMap = new Map();
-  intentMap.set('informou_cep', consultarViaCep);
-  agent.handleRequest(intentMap);
+      return response.json({
+        fulfillmentText: textoResposta
+      });
+    }
+
+  } catch (error) {
+    console.error('Erro interno no Webhook:', error.message);
+    
+    return response.json({
+      fulfillmentText: 'tive um problema ao conectar com o serviço de CEP. pode tentar novamente em alguns segundos?'
+    });
+  }
 });
 
 const PORT = process.env.PORT || 3000;
