@@ -8,6 +8,13 @@ app.post('/webhook', async (request, response) => {
   try {
     const queryResult = request.body.queryResult;
     const parameters = queryResult.parameters || {};
+
+    const contexts = queryResult.outputContexts || [];
+    const pedidoContext = contexts.find(context =>
+      context.name.endsWith('/contexts/pedido-em-andamento')
+    );
+
+    const item = pedidoContext?.parameters?.['set-pronto'];
     
     let rawCep = parameters.cep;
 
@@ -33,10 +40,13 @@ app.post('/webhook', async (request, response) => {
         fulfillmentText: `não encontrei nenhum endereço para o CEP ${cep}. Pode conferir os números?`
       });
     } else {
-      const textoResposta = `localizei o endereço!\n` +
-                            `rua: ${dados.logradouro}\n` +
-                            `bairro: ${dados.bairro}\n` +
-                            `cidade: ${dados.localidade} - ${dados.uf}\n\n`;
+      const textoResposta =
+          `confirma a compra de ${item} para ser enviada no endereço:\n\n` +
+          `📍 ${dados.logradouro}\n` +
+          `🏘️ ${dados.bairro}\n` +
+          `🏙️ ${dados.localidade} - ${dados.uf}\n\n` +
+          `1. sim\n` +
+          `2. não`;
 
       return response.json({
         fulfillmentText: textoResposta
