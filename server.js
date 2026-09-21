@@ -11,10 +11,12 @@ app.post('/webhook', async (request, response) => {
 
     const contexts = queryResult.outputContexts || [];
     const pedidoContext = contexts.find(context =>
-      context.name.endsWith('/contexts/pedido-em-andamento')
+      context.name.endsWith('/contexts/pedido-em-andamento') ||
+      context.name.endsWith('/contexts/pedido-em-andamento-outros')
     );
 
-    const item = pedidoContext?.parameters?.['set-pronto'];
+    const item = pedidoContext?.parameters?.['set-pronto'] ||
+      pedidoContext?.parameters?.['outros-produtos'];
     
     let rawCep = parameters.cep;
 
